@@ -5,11 +5,20 @@ import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { errorHandler } from './middleware/errorHandler.js';
+import { corsMiddleware } from './middleware/cors.js';
 import { logger } from './utils/logger.js';
 import { assertGeminiConfig, isMockMode } from './gemini/client.js';
 import sampleRouter from './routes/sample.js';
 import analyzePitchRouter from './routes/analyzePitch.js';
 import verifyClaimsRouter from './routes/verifyClaims.js';
+
+// Load .env for local development. On Cloud Run the platform supplies env vars
+// directly and no .env file exists, so a missing file is not an error.
+try {
+  process.loadEnvFile('.env');
+} catch {
+  // No .env present. Rely on the ambient environment.
+}
 
 const PORT = Number.parseInt(process.env.PORT ?? '8080', 10);
 const isProduction = process.env.NODE_ENV === 'production';
@@ -40,6 +49,9 @@ app.use(
   })
 );
 app.use(compression());
+// Applied before the API routes so both the hosted web app and the native
+// Android client can reach them.
+app.use('/api', corsMiddleware);
 app.use(express.json({ limit: '64kb' }));
 
 app.use(

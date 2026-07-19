@@ -48,32 +48,59 @@ Use short stable ids like "m1", "q1", "c1".
 All timestamps must be within 0 and ${durationSeconds} seconds.`;
 }
 
-export const CLAIM_SYSTEM_INSTRUCTION = `You verify factual claims made in startup pitches using Google Search.
+/** Call 1: grounded and unstructured, so citation annotations are preserved. */
+export const CLAIM_RESEARCH_INSTRUCTION = `You research factual claims made in startup pitches using Google Search.
 
 Rules:
-- Use the search tool to find current evidence before answering.
+- Always use the search tool before answering.
+- Report what the evidence actually says, including where it disagrees with the claim.
+- Pay attention to scope: whether a figure is global or national, whole-sector or narrow, and what year it describes.
 - Never state a numeric probability that the claim is true.
-- Never invent source names, publishers or URLs in your JSON. Citations are collected separately from the search tool itself.
-- If the evidence does not settle the claim, use status "insufficient_evidence" rather than guessing.
-- Distinguish a figure that is directionally right but wrongly attributed (partially_supported) from one that is wrong (contradicted).
-- saferWording must be a defensible rewrite the founder could say out loud.`;
+- If the evidence does not settle the claim, say so plainly rather than guessing.`;
 
-export function buildClaimPrompt(claim: string, query: string, timestampSeconds: number): string {
+export function buildClaimResearchPrompt(
+  claim: string,
+  query: string,
+  timestampSeconds: number
+): string {
   return `A founder said the following at ${timestampSeconds} seconds into their pitch:
 
 "${claim}"
 
-Search the web for evidence using this query as a starting point: ${query}
+Search the web for evidence. Start from this query: ${query}
 
-Assess the claim and return:
-- status: supported, partially_supported, contradicted, or insufficient_evidence
-- explanation: what the evidence actually shows, in two or three sentences
-- evidenceFor and evidenceAgainst: short factual bullets
-- missingContext: the qualifications the founder omitted
-- saferWording: a rewrite that stays within what the evidence supports
-- evidenceStrength: weak, moderate or strong
+Then write a short plain-prose briefing covering:
+- what the best available evidence says
+- whether it supports, partly supports, or contradicts the claim
+- what scope or definition the founder's figure appears to conflate
+- what qualification the founder omitted
+- how strong the available evidence is
 
-Do not include any URLs or source names in your response.`;
+Write prose, not JSON.`;
+}
+
+/** Call 2: structures call 1's prose. No search tool, so it cannot invent a URL. */
+export const CLAIM_STRUCTURE_INSTRUCTION = `You convert a research briefing into a strict JSON verdict.
+
+Rules:
+- Use only what the briefing states. Do not add outside knowledge.
+- Never include URLs, source names or publishers anywhere in your output. Citations are attached separately from the search tool.
+- Distinguish a figure that is directionally right but wrongly attributed (partially_supported) from one that is wrong (contradicted).
+- Use insufficient_evidence when the briefing does not settle the claim.
+- saferWording must be a defensible rewrite the founder could say out loud.`;
+
+export function buildClaimStructurePrompt(claim: string, research: string): string {
+  return `The founder's claim was:
+
+"${claim}"
+
+A researcher produced this briefing from live web sources:
+
+---
+${research}
+---
+
+Convert the briefing into the required JSON verdict. Do not include any URLs or source names.`;
 }
 
 /** Hand-written JSON Schemas. Kept in lockstep with shared/schemas.ts. */

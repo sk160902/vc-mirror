@@ -41,13 +41,22 @@ interface InteractionInputPart {
 
 export interface InteractionRequest {
   input: InteractionInputPart[];
-  jsonSchema: Record<string, unknown>;
+  /**
+   * Omit to leave the response unstructured. Structured output and the
+   * google_search tool are mutually exclusive in practice: supplying
+   * response_format alongside google_search suppresses citation annotations
+   * (verified against gemini-3.5-flash). Grounded calls therefore run
+   * unstructured and are structured by a second, search-free call.
+   */
+  jsonSchema?: Record<string, unknown>;
   useGoogleSearch?: boolean;
   systemInstruction?: string;
 }
 
 export interface Annotation {
   title?: string;
+  /** The API returns `url`; `uri` is tolerated in case the field is renamed. */
+  url?: string;
   uri?: string;
   type?: string;
 }
@@ -100,14 +109,17 @@ export async function createInteraction(req: InteractionRequest): Promise<Intera
   const params: Record<string, unknown> = {
     model: GEMINI_MODEL,
     input: req.input,
-    response_format: [
+  };
+
+  if (req.jsonSchema) {
+    params.response_format = [
       {
         type: 'text',
         mime_type: 'application/json',
         schema: req.jsonSchema,
       },
-    ],
-  };
+    ];
+  }
 
   if (req.systemInstruction) params.system_instruction = req.systemInstruction;
   if (req.useGoogleSearch) params.tools = [{ type: 'google_search' }];
