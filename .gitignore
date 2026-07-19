@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+tmp/
+uploads/
+client/public/samples/*.mp4
+client/public/samples/*.webm

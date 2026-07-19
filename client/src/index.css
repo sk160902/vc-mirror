@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-paper: #faf9f6;
+  --color-paper-raised: #ffffff;
+  --color-ink: #17160f;
+  --color-ink-soft: #4a483d;
+  --color-ink-muted: #78756a;
+  --color-line: #e4e1d7;
+  --color-line-strong: #c9c5b6;
+  --color-accent: #a3441c;
+  --color-accent-soft: #f6ece6;
+  --color-signal-high: #b03a1f;
+  --color-signal-medium: #a97514;
+  --color-signal-low: #3f6b4f;
+
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Visible, consistent keyboard focus across all interactive elements. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@keyframes vcm-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vcm-enter {
+  animation: vcm-fade-up 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .vcm-enter {
+    animation: none;
+  }
+}
