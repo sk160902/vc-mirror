@@ -22,6 +22,9 @@ COPY . .
 # GEMINI_API_KEY is injected by Maritime as a secret at runtime; never baked in.
 # AUTOLAB_API_KEY (optional) routes optimization to Autolab instead of the local engine.
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+EXPOSE 8080
 
-# Default wake action: ingest a batch, re-improve, persist the curve, exit (sleep).
-CMD ["python3", "agent/run_cycle.py", "--ingest", "40", "--rounds", "6"]
+# Long-running service: health check on GET /, one self-improvement cycle per POST.
+# (A run-once container would exit and never pass Maritime's health check.)
+CMD ["python3", "agent/server.py"]
