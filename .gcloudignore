@@ -9,3 +9,8 @@ dist/
 tmp/
 uploads/
 docs/
+rsi/node_modules/
+rsi/data/raw/
+rsi/data/videos/
+rsi/__pycache__/
+rsi/

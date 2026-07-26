@@ -8,3 +8,8 @@ tmp/
 uploads/
 client/public/samples/*.mp4
 client/public/samples/*.webm
+rsi/node_modules
+rsi/data/raw/
+rsi/data/videos/
+rsi/__pycache__/
+rsi/**/__pycache__/
