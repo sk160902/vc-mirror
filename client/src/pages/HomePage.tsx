@@ -1,47 +1,122 @@
 import { useState } from 'react';
-import { ArrowRight, Crosshair, MessageCircleQuestion, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  Crosshair,
+  MessageCircleQuestion,
+  ShieldCheck,
+  Zap,
+  Mic,
+  Scissors,
+} from 'lucide-react';
 import VideoUploader from '../components/VideoUploader.js';
 
+export type AnalysisMode = 'pitch' | 'virality';
+
 interface Props {
+  mode: AnalysisMode;
+  onModeChange: (mode: AnalysisMode) => void;
   onAnalyze: (file: File, durationSeconds: number) => void;
   onOpenSample: () => void;
   busy: boolean;
   error: string | null;
 }
 
-const VALUE_POINTS = [
+const COPY: Record<
+  AnalysisMode,
   {
-    icon: Crosshair,
-    title: 'Find the weak moment',
-    body: 'Feedback is attached to the exact second it happens, not summarized at the end.',
+    eyebrow: string;
+    title: string;
+    body: string;
+    cta: string;
+    valuePoints: { icon: typeof Crosshair; title: string; body: string }[];
+  }
+> = {
+  pitch: {
+    eyebrow: 'VC Mirror — Pitch Analysis',
+    title: 'See what investors hear, not what you think you said.',
+    body: 'Upload a short pitch video. VC Mirror marks the exact moments that build or break conviction, checks the claims an investor would look up, and tells you which questions are coming.',
+    cta: 'Analyze my pitch',
+    valuePoints: [
+      {
+        icon: Crosshair,
+        title: 'Find the weak moment',
+        body: 'Feedback is attached to the exact second it happens, not summarized at the end.',
+      },
+      {
+        icon: ShieldCheck,
+        title: 'Verify the claim',
+        body: 'Checkable numbers are searched against live sources, with the citations shown.',
+      },
+      {
+        icon: MessageCircleQuestion,
+        title: 'Prepare the hard question',
+        body: 'Three questions drawn from the specific gaps in your pitch, with answer structure.',
+      },
+    ],
   },
-  {
-    icon: ShieldCheck,
-    title: 'Verify the claim',
-    body: 'Checkable numbers are searched against live sources, with the citations shown.',
+  virality: {
+    eyebrow: 'VC Mirror — Virality Check',
+    title: 'See what makes people stop scrolling, not what you hope lands.',
+    body: 'Upload a short video. VC Mirror marks the moments that build or lose attention, and scores hook strength, facial expressiveness, vocal tonality, pacing and shareability.',
+    cta: 'Check my video',
+    valuePoints: [
+      {
+        icon: Zap,
+        title: 'Find the flat moment',
+        body: 'Attention-loss risks are attached to the exact second they happen, not summarized at the end.',
+      },
+      {
+        icon: Mic,
+        title: 'Hear the vocal dynamics',
+        body: 'Pitch variation, tonal energy and pacing of speech are scored against what was actually said.',
+      },
+      {
+        icon: Scissors,
+        title: 'Fix the pacing',
+        body: 'Concrete suggestions for cuts and edits tied to specific moments, not generic advice.',
+      },
+    ],
   },
-  {
-    icon: MessageCircleQuestion,
-    title: 'Prepare the hard question',
-    body: 'Three questions drawn from the specific gaps in your pitch, with answer structure.',
-  },
-];
+};
 
-export default function HomePage({ onAnalyze, onOpenSample, busy, error }: Props) {
+export default function HomePage({
+  mode,
+  onModeChange,
+  onAnalyze,
+  onOpenSample,
+  busy,
+  error,
+}: Props) {
   const [selected, setSelected] = useState<{ file: File; duration: number } | null>(null);
+  const copy = COPY[mode];
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-12 sm:py-20">
-      <header className="max-w-2xl">
-        <p className="font-display text-sm tracking-[0.2em] text-accent uppercase">VC Mirror</p>
-        <h1 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">
-          See what investors hear, not what you think you said.
-        </h1>
-        <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-          Upload a short pitch video. VC Mirror marks the exact moments that build or break
-          conviction, checks the claims an investor would look up, and tells you which questions
-          are coming.
+      <div className="flex gap-1 border border-line bg-paper-raised p-1 text-sm" role="tablist">
+        {(['pitch', 'virality'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            disabled={busy}
+            onClick={() => onModeChange(m)}
+            className={[
+              'flex-1 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+              mode === m ? 'bg-ink text-paper' : 'text-ink-soft hover:text-ink',
+            ].join(' ')}
+          >
+            {m === 'pitch' ? 'Pitch Analysis' : 'Virality Check'}
+          </button>
+        ))}
+      </div>
+
+      <header className="mt-8 max-w-2xl">
+        <p className="font-display text-sm tracking-[0.2em] text-accent uppercase">
+          {copy.eyebrow}
         </p>
+        <h1 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">{copy.title}</h1>
+        <p className="mt-5 text-lg leading-relaxed text-ink-soft">{copy.body}</p>
       </header>
 
       <div className="mt-12 grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
@@ -59,22 +134,25 @@ export default function HomePage({ onAnalyze, onOpenSample, busy, error }: Props
               onClick={() => selected && onAnalyze(selected.file, selected.duration)}
               className="inline-flex items-center gap-2 rounded-sm bg-ink px-6 py-3 font-medium text-paper transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
             >
-              Analyze my pitch
+              {copy.cta}
               <ArrowRight size={16} aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              onClick={onOpenSample}
-              disabled={busy}
-              className="text-sm text-ink-soft underline underline-offset-4 hover:text-accent disabled:opacity-40"
-            >
-              View sample analysis
-            </button>
+            {mode === 'pitch' && (
+              <button
+                type="button"
+                onClick={onOpenSample}
+                disabled={busy}
+                className="text-sm text-ink-soft underline underline-offset-4 hover:text-accent disabled:opacity-40"
+              >
+                View sample analysis
+              </button>
+            )}
           </div>
 
           {!selected && (
             <p className="mt-3 text-xs text-ink-muted">
-              Choose a video to enable analysis, or open the pre-analyzed sample.
+              Choose a video to enable analysis
+              {mode === 'pitch' ? ', or open the pre-analyzed sample.' : '.'}
             </p>
           )}
 
@@ -95,7 +173,7 @@ export default function HomePage({ onAnalyze, onOpenSample, busy, error }: Props
         </div>
 
         <ul className="space-y-7 lg:pt-2">
-          {VALUE_POINTS.map(({ icon: Icon, title, body }) => (
+          {copy.valuePoints.map(({ icon: Icon, title, body }) => (
             <li key={title} className="flex gap-4">
               <Icon
                 size={18}

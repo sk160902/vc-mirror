@@ -1,4 +1,4 @@
-import type { PitchAnalysis, VerifiedClaim } from '@shared/types.js';
+import type { PitchAnalysis, VerifiedClaim, ViralityAnalysis } from '@shared/types.js';
 
 export interface SampleResponse {
   analysis: PitchAnalysis;
@@ -55,4 +55,17 @@ export async function verifyClaims(analysisId: string): Promise<{ verification: 
   });
   if (!res.ok) await parseError(res);
   return (await res.json()) as { verification: VerifiedClaim[] };
+}
+
+export async function analyzeVirality(
+  file: File,
+  durationSeconds: number
+): Promise<{ analysis: ViralityAnalysis }> {
+  const form = new FormData();
+  form.append('video', file);
+  form.append('durationSeconds', String(Math.round(durationSeconds)));
+
+  const res = await fetch('/api/analyze-virality', { method: 'POST', body: form });
+  if (!res.ok) await parseError(res);
+  return (await res.json()) as { analysis: ViralityAnalysis };
 }

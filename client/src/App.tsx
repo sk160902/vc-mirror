@@ -1,17 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { PitchAnalysis, VerifiedClaim } from '@shared/types.js';
-import HomePage from './pages/HomePage.js';
+import type { PitchAnalysis, VerifiedClaim, ViralityAnalysis } from '@shared/types.js';
+import HomePage, { type AnalysisMode } from './pages/HomePage.js';
 import AnalysisPage from './pages/AnalysisPage.js';
+import ViralityAnalysisPage from './pages/ViralityAnalysisPage.js';
 import ProcessingState, { PROCESSING_STAGES } from './components/ProcessingState.js';
-import { analyzePitch, fetchSample, verifyClaims, ApiRequestError } from './lib/api.js';
+import {
+  analyzePitch,
+  analyzeVirality,
+  fetchSample,
+  verifyClaims,
+  ApiRequestError,
+} from './lib/api.js';
 
 type View =
   | { kind: 'home' }
   | { kind: 'processing' }
-  | { kind: 'analysis'; analysis: PitchAnalysis; videoUrl: string | null; isSample: boolean };
+  | {
+      kind: 'analysis';
+      mode: 'pitch';
+      analysis: PitchAnalysis;
+      videoUrl: string | null;
+      isSample: boolean;
+    }
+  | {
+      kind: 'analysis';
+      mode: 'virality';
+      analysis: ViralityAnalysis;
+      videoUrl: string | null;
+      isSample: boolean;
+    };
 
 export default function App() {
   const [view, setView] = useState<View>({ kind: 'home' });
+  const [mode, setMode] = useState<AnalysisMode>('pitch');
   const [homeError, setHomeError] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
 
@@ -63,6 +84,19 @@ export default function App() {
       );
 
       try {
+        if (mode === 'virality') {
+          const { analysis } = await analyzeVirality(file, durationSeconds);
+          timers.forEach(window.clearTimeout);
+          setStage(PROCESSING_STAGES.length - 1);
+
+          releaseObjectUrl();
+          const url = URL.createObjectURL(file);
+          objectUrlRef.current = url;
+
+          setView({ kind: 'analysis', mode: 'virality', analysis, videoUrl: url, isSample: false });
+          return;
+        }
+
         const { analysis } = await analyzePitch(file, durationSeconds);
         timers.forEach(window.clearTimeout);
         setStage(PROCESSING_STAGES.length - 1);
@@ -71,7 +105,7 @@ export default function App() {
         const url = URL.createObjectURL(file);
         objectUrlRef.current = url;
 
-        setView({ kind: 'analysis', analysis, videoUrl: url, isSample: false });
+        setView({ kind: 'analysis', mode: 'pitch', analysis, videoUrl: url, isSample: false });
         if (analysis.claimsToVerify.length > 0) void runVerification(analysis.analysisId);
       } catch (err) {
         timers.forEach(window.clearTimeout);
@@ -83,7 +117,7 @@ export default function App() {
         setView({ kind: 'home' });
       }
     },
-    [releaseObjectUrl, runVerification]
+    [mode, releaseObjectUrl, runVerification]
   );
 
   const handleOpenSample = useCallback(async () => {
@@ -94,7 +128,7 @@ export default function App() {
       setVerification(cached);
       setVerificationError(null);
       setVerificationPending(false);
-      setView({ kind: 'analysis', analysis, videoUrl: sampleVideoUrl, isSample: true });
+      setView({ kind: 'analysis', mode: 'pitch', analysis, videoUrl: sampleVideoUrl, isSample: true });
     } catch {
       setHomeError('The sample analysis could not be loaded. Please try again.');
     }
@@ -112,6 +146,19 @@ export default function App() {
     return (
       <main className="mx-auto max-w-5xl px-5">
         <ProcessingState activeStage={stage} />
+      </main>
+    );
+  }
+
+  if (view.kind === 'analysis' && view.mode === 'virality') {
+    return (
+      <main>
+        <ViralityAnalysisPage
+          analysis={view.analysis}
+          videoUrl={view.videoUrl}
+          isSample={view.isSample}
+          onBack={handleBack}
+        />
       </main>
     );
   }
@@ -136,6 +183,8 @@ export default function App() {
   return (
     <main>
       <HomePage
+        mode={mode}
+        onModeChange={setMode}
         onAnalyze={(file, duration) => void handleAnalyze(file, duration)}
         onOpenSample={() => void handleOpenSample()}
         busy={false}
