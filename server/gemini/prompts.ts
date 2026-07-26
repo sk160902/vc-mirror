@@ -1,10 +1,13 @@
 import {
   MAX_CLAIMS_TO_VERIFY,
   MAX_TIMELINE_EVENTS,
+  MAX_VIRAL_MOMENTS,
   MOMENT_TYPES,
   NOT_ESTABLISHED,
   RUBRIC_DIMENSIONS,
   TARGET_INVESTOR_QUESTIONS,
+  VIRALITY_DIMENSIONS,
+  VIRAL_MOMENT_TYPES,
 } from '../../shared/constants.js';
 
 export const PITCH_SYSTEM_INSTRUCTION = `You are an experienced seed-stage investor reviewing a founder's pitch video.
@@ -199,6 +202,102 @@ export const PITCH_JSON_SCHEMA: Record<string, unknown> = {
       properties: {
         strongestMomentId: { type: 'string' },
         biggestConcernMomentId: { type: 'string' },
+        oneSentenceAssessment: { type: 'string' },
+      },
+    },
+  },
+};
+
+export const VIRALITY_SYSTEM_INSTRUCTION = `You are a short-form video editor and creative strategist assessing a video's potential to perform well on platforms like TikTok, Reels and Shorts.
+
+Evaluate ONLY what is actually visible and audible in the video.
+
+You must never invent or infer:
+- actual view counts, share counts or platform performance
+- the creator's follower count, audience or distribution
+- whether the video will "go viral"
+- content that is not visible on screen or audible in the audio
+
+When something cannot be assessed from the video, write exactly: "${NOT_ESTABLISHED}"
+
+Rules for your output:
+- Quote or closely describe what is actually said or shown. The "quote" field must reflect the real audio or visual content.
+- Attach every observation to a timestamp in seconds from the start of the video.
+- Describe facial expression, vocal tonality, pitch variation and pacing as directly observed, not assumed from context.
+- Do not predict an actual outcome (views, shares, virality). Describe creative strengths and weaknesses only.
+- Do not describe your own internal reasoning. State observable grounds only.`;
+
+export function buildViralityPrompt(durationSeconds: number): string {
+  return `Analyze this ${durationSeconds}-second short-form video for its creative potential to capture and hold attention.
+
+Produce:
+
+1. rubric: score all six dimensions (${VIRALITY_DIMENSIONS.join(', ')}) from 0 to 5 based strictly on evidence in the video. Give a one-or-two sentence summary per dimension and the timestamps (in seconds) that justify it.
+   - hook_strength: does the first few seconds stop a scroll
+   - emotional_intensity: joy, surprise, anger or other valence and arousal actually conveyed
+   - facial_expressiveness: visible range of expression, eye contact, energy
+   - vocal_dynamics: pitch variation, tonal energy, pacing of speech
+   - pacing_editing: cut frequency and visual pacing sustaining attention
+   - shareability_trigger: presence of a relatable, surprising or quotable moment
+
+2. moments: at most ${MAX_VIRAL_MOMENTS} distinct moments, each classified as one of ${VIRAL_MOMENT_TYPES.join(', ')}. Include both moments that build attention and moments that risk losing it. For each: the timestamp in seconds, a quote or description of what happens, what you observed (facial/vocal/pacing detail), why it matters for holding attention, and a concrete suggested fix (null when the moment is already strong).
+
+3. overallSummary: the id of the strongest moment, the id of the moment representing the biggest attention-loss risk, and a single sentence assessing the video's creative potential.
+
+Use short stable ids like "m1".
+All timestamps must be within 0 and ${durationSeconds} seconds.`;
+}
+
+export const VIRALITY_JSON_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  required: ['rubric', 'moments', 'overallSummary'],
+  properties: {
+    rubric: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['dimension', 'score', 'summary', 'evidenceTimestamps'],
+        properties: {
+          dimension: { type: 'string', enum: [...VIRALITY_DIMENSIONS] },
+          score: { type: 'integer', minimum: 0, maximum: 5 },
+          summary: { type: 'string' },
+          evidenceTimestamps: { type: 'array', items: { type: 'number' } },
+        },
+      },
+    },
+    moments: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: [
+          'id',
+          'timestampSeconds',
+          'type',
+          'severity',
+          'quote',
+          'observation',
+          'whyItMatters',
+          'suggestedFix',
+        ],
+        properties: {
+          id: { type: 'string' },
+          timestampSeconds: { type: 'number' },
+          endTimestampSeconds: { type: ['number', 'null'] },
+          type: { type: 'string', enum: [...VIRAL_MOMENT_TYPES] },
+          severity: { type: 'string', enum: ['low', 'medium', 'high'] },
+          quote: { type: 'string' },
+          observation: { type: 'string' },
+          whyItMatters: { type: 'string' },
+          suggestedFix: { type: ['string', 'null'] },
+        },
+      },
+    },
+    overallSummary: {
+      type: 'object',
+      required: ['strongestMomentId', 'biggestRiskMomentId', 'oneSentenceAssessment'],
+      properties: {
+        strongestMomentId: { type: 'string' },
+        biggestRiskMomentId: { type: 'string' },
         oneSentenceAssessment: { type: 'string' },
       },
     },

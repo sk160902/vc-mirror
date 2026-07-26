@@ -11,6 +11,7 @@ import { assertGeminiConfig, isMockMode } from './gemini/client.js';
 import sampleRouter from './routes/sample.js';
 import analyzePitchRouter from './routes/analyzePitch.js';
 import verifyClaimsRouter from './routes/verifyClaims.js';
+import analyzeViralityRouter from './routes/analyzeVirality.js';
 
 // Load .env for local development. On Cloud Run the platform supplies env vars
 // directly and no .env file exists, so a missing file is not an error.
@@ -72,6 +73,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api', sampleRouter);
 app.use('/api', analyzePitchRouter);
 app.use('/api', verifyClaimsRouter);
+app.use('/api', analyzeViralityRouter);
 
 if (isProduction) {
   const clientDist = path.resolve(process.cwd(), 'dist/client');

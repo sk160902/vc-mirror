@@ -1,4 +1,5 @@
 import { SAMPLE_ANALYSIS, SAMPLE_VERIFICATION } from '../sample/sampleAnalysis.js';
+import { SAMPLE_VIRALITY_ANALYSIS } from '../sample/sampleViralityAnalysis.js';
 import type { ClaimToVerify, VerifiedClaim } from '../../shared/types.js';
 
 /**
@@ -15,4 +16,9 @@ export function mockClaimVerification(claims: ClaimToVerify[]): VerifiedClaim[] 
     const template = SAMPLE_VERIFICATION[index] ?? SAMPLE_VERIFICATION[0];
     return { ...template, claimId: claim.id };
   });
+}
+
+export function mockViralityAnalysis(): unknown {
+  const { analysisId: _id, durationSeconds: _d, ...rest } = SAMPLE_VIRALITY_ANALYSIS;
+  return rest;
 }
