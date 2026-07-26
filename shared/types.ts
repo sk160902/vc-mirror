@@ -9,6 +9,10 @@ import type {
   sourceSchema,
   timelineEventSchema,
   verifiedClaimSchema,
+  viralMomentSchema,
+  viralityAnalysisSchema,
+  viralityOverallSummarySchema,
+  viralityRubricEntrySchema,
 } from './schemas.js';
 
 export type Company = z.infer<typeof companySchema>;
@@ -24,6 +28,14 @@ export type VerifiedClaim = z.infer<typeof verifiedClaimSchema>;
 export type MomentType = TimelineEvent['type'];
 export type Severity = TimelineEvent['severity'];
 export type RubricDimension = RubricEntry['dimension'];
+
+export type ViralityRubricEntry = z.infer<typeof viralityRubricEntrySchema>;
+export type ViralMoment = z.infer<typeof viralMomentSchema>;
+export type ViralityOverallSummary = z.infer<typeof viralityOverallSummarySchema>;
+export type ViralityAnalysis = z.infer<typeof viralityAnalysisSchema>;
+
+export type ViralMomentType = ViralMoment['type'];
+export type ViralityDimension = ViralityRubricEntry['dimension'];
 
 export interface AnalysisAnalytics {
   readinessScore: number;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MOMENT_TYPES, RUBRIC_DIMENSIONS } from './constants.js';
+import { MOMENT_TYPES, RUBRIC_DIMENSIONS, VIRALITY_DIMENSIONS, VIRAL_MOMENT_TYPES } from './constants.js';
 
 export const companySchema = z.object({
   name: z.string().nullable(),
@@ -98,4 +98,48 @@ export const pitchAnalysisModelSchema = pitchAnalysisSchema.omit({
 export const verifiedClaimModelSchema = verifiedClaimSchema.omit({
   claimId: true,
   sources: true,
+});
+
+export const viralityRubricEntrySchema = z.object({
+  dimension: z.enum(VIRALITY_DIMENSIONS),
+  score: z.number().int().min(0).max(5),
+  summary: z.string(),
+  evidenceTimestamps: z.array(z.number()).default([]),
+});
+
+export const viralMomentSchema = z.object({
+  id: z.string(),
+  timestampSeconds: z.number(),
+  endTimestampSeconds: z.number().nullable().default(null),
+  type: z.enum(VIRAL_MOMENT_TYPES),
+  severity: z.enum(['low', 'medium', 'high']),
+  quote: z.string(),
+  observation: z.string(),
+  whyItMatters: z.string(),
+  suggestedFix: z.string().nullable().default(null),
+});
+
+export const viralityOverallSummarySchema = z.object({
+  strongestMomentId: z.string(),
+  biggestRiskMomentId: z.string(),
+  oneSentenceAssessment: z.string(),
+});
+
+/**
+ * The virality score is deliberately absent here: like the pitch readiness
+ * heuristic, it is computed client-side from `rubric` (see
+ * computeViralityScore in shared/analytics.ts), never asked of the model or
+ * stored on the analysis.
+ */
+export const viralityAnalysisSchema = z.object({
+  analysisId: z.string(),
+  durationSeconds: z.number(),
+  rubric: z.array(viralityRubricEntrySchema),
+  moments: z.array(viralMomentSchema),
+  overallSummary: viralityOverallSummarySchema,
+});
+
+export const viralityAnalysisModelSchema = viralityAnalysisSchema.omit({
+  analysisId: true,
+  durationSeconds: true,
 });

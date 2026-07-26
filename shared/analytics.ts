@@ -1,5 +1,5 @@
-import { MAX_RUBRIC_SCORE, POSITIVE_MOMENT_TYPES } from './constants.js';
-import type { AnalysisAnalytics, PitchAnalysis, VerifiedClaim } from './types.js';
+import { MAX_RUBRIC_SCORE, POSITIVE_MOMENT_TYPES, POSITIVE_VIRAL_MOMENT_TYPES } from './constants.js';
+import type { AnalysisAnalytics, PitchAnalysis, VerifiedClaim, ViralityAnalysis } from './types.js';
 
 /**
  * Pitch readiness heuristic. Computed locally from the six rubric scores so the
@@ -44,6 +44,24 @@ export function computeAnalytics(
     evidenceCoveragePercent: computeEvidenceCoverage(analysis, verified),
     questionsToPrepare: analysis.investorQuestions.length,
   };
+}
+
+/**
+ * Virality potential heuristic. Computed locally from the six rubric scores,
+ * same philosophy as computeReadinessScore above: an inspectable preparation
+ * aid, never an unexplained model-generated number or a prediction of actual
+ * platform performance.
+ */
+export function computeViralityScore(analysis: ViralityAnalysis): number {
+  if (analysis.rubric.length === 0) return 0;
+  const total = analysis.rubric.reduce((sum, entry) => sum + entry.score, 0);
+  const max = analysis.rubric.length * MAX_RUBRIC_SCORE;
+  return Math.round((total / max) * 100);
+}
+
+export function countViralHighRiskMoments(analysis: ViralityAnalysis): number {
+  const positive = new Set<string>(POSITIVE_VIRAL_MOMENT_TYPES);
+  return analysis.moments.filter((m) => m.severity === 'high' && !positive.has(m.type)).length;
 }
 
 export function formatTimestamp(seconds: number): string {

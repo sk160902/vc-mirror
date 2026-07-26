@@ -47,3 +47,41 @@ export const POSITIVE_MOMENT_TYPES = ['conviction_builder', 'strong_moment'] as 
 
 export const MAX_RUBRIC_SCORE = 5;
 export const NOT_ESTABLISHED = 'Not established in the pitch.';
+
+export const MAX_VIRAL_MOMENTS = 6;
+
+export const VIRALITY_DIMENSIONS = [
+  'hook_strength',
+  'emotional_intensity',
+  'facial_expressiveness',
+  'vocal_dynamics',
+  'pacing_editing',
+  'shareability_trigger',
+] as const;
+
+export const VIRALITY_LABELS: Record<(typeof VIRALITY_DIMENSIONS)[number], string> = {
+  hook_strength: 'Hook strength',
+  emotional_intensity: 'Emotional intensity',
+  facial_expressiveness: 'Facial expressiveness',
+  vocal_dynamics: 'Vocal dynamics',
+  pacing_editing: 'Pacing and editing',
+  shareability_trigger: 'Shareability trigger',
+};
+
+export const VIRAL_MOMENT_TYPES = [
+  'hook',
+  'energy_peak',
+  'flat_moment',
+  'pacing_issue',
+  'standout_line',
+] as const;
+
+export const VIRAL_MOMENT_LABELS: Record<(typeof VIRAL_MOMENT_TYPES)[number], string> = {
+  hook: 'Hook',
+  energy_peak: 'Energy peak',
+  flat_moment: 'Flat moment',
+  pacing_issue: 'Pacing issue',
+  standout_line: 'Standout line',
+};
+
+export const POSITIVE_VIRAL_MOMENT_TYPES = ['hook', 'energy_peak', 'standout_line'] as const;
